@@ -26,6 +26,7 @@ final class ChatClient {
     /**
      * Attempts to establish a connection with the server
      * @return boolean - false if any errors occur in startup, true if successful
+     test change
      */
     private boolean start() {
         // Create a socket
