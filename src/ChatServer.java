@@ -4,7 +4,9 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 final class ChatServer {
@@ -28,25 +30,43 @@ final class ChatServer {
     private void start() {
         try {
             ServerSocket serverSocket = new ServerSocket(port);
+
+            System.out.println(getTimeStamp() + " Server waiting for Clients on port " + port);
             acceptClients(serverSocket);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Starts loop to listen for incoming client connections
+     * @param serverSocket
+     * @throws IOException
+     */
     private void acceptClients(ServerSocket serverSocket) throws IOException {
         while (true) {
-            // accept connection
             Socket socket = serverSocket.accept();
-            // set up and run thread
-            Runnable r = new ClientThread(socket, uniqueId++);
+            ClientThread r = new ClientThread(socket, uniqueId++);
             Thread t = new Thread(r);
-            clients.add((ClientThread) r);
+
+            // check and terminate any duplicate usernames
+            if (isUsernameTaken(r.username)) {
+                try {
+                    r.sOutput.writeObject("\"" + r.username + "\" is already taken");
+                    r.closeThisConnection();
+                    System.out.println(getTimeStamp() + " Another User tried to join with taken username: " + r.username);
+                    continue;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            clients.add(r);
+            System.out.println(getTimeStamp() + " " + r.username + " just connected.");
             t.start(); // call run() in ClientThread
         }
     }
 
-    /**
+    /*
      *	Sample code to use as a reference for Tic Tac Toe
      *
      * directMessage - sends a message to a specific username, if connected
@@ -65,6 +85,24 @@ final class ChatServer {
         }
     }*/
 
+    /**
+     * TODO: USE THIS METHOD TO PREFACE ALL MESSAGES TO CLIENTS AND IN LOG FILES
+     * TODO: also delete these two TODO lines :P
+     * Helper method to quickly get proper Timestamp
+     * @return
+     */
+    private static String getTimeStamp() {
+        SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm:ss");
+        Date now = new Date();
+        return sdfTime.format(now);
+    }
+
+    private boolean isUsernameTaken(String username) {
+        for (ClientThread clientThread : clients)
+            if (clientThread.username.equals(username))
+                return true;
+        return false;
+    }
 
     /*
      *  > java ChatServer
@@ -89,8 +127,9 @@ final class ChatServer {
         ObjectInputStream sInput;       // Input stream to the server from the client
         ObjectOutputStream sOutput;     // Output stream to the client from the server
         String username;                // Username of the connected client
-        ChatMessage cm;                 // Helper variable to manage messages
         int id;
+
+        ChatMessage cm;                 // Helper variable to manage messages
 
         /*
          * socket - the socket the client is connected to
@@ -102,40 +141,157 @@ final class ChatServer {
             try {
                 sOutput = new ObjectOutputStream(socket.getOutputStream());
                 sInput = new ObjectInputStream(socket.getInputStream());
+                // Read the username sent to you by client
                 username = (String) sInput.readObject();
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
 
-        /*
-         * This is what the client thread actually runs.
+        /**
+         * Main loop executed in the client Thread. Branch paths often
+         * in different methods
          */
         @Override
         public void run() {
-            // Read the username sent to you by client
-            while (socket.isConnected()) {
+            while (true) {
+                // process client messages
                 try {
                     cm = (ChatMessage) sInput.readObject();
+                    switch (cm.getMessageType()) {
+                        case 0:
+                            processAsStandardMessage();
+                            break;
+                        case 1:
+                            processAsLogout();
+                            return;
+                        case 2:
+                            processAsDM();
+                            break;
+                        case 3:
+                            processAsList();
+                            break;
+                        case 4:
+                            processAsTicTacToe();
+                            break;
+                    }
                 } catch (SocketException exc) {
+                    // triggered when client disconnects abruptly
                     System.out.println(username + " disconnected");
-                    clients.remove(this);
-                    break;
+                    closeThisConnection();
+                    return;
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
-                System.out.println(username + ": Ping");
-                // Send message back to the client
-                try {
-                    sOutput.writeObject("Pong");
-                } catch (SocketException exc) {
-                    System.out.println(username + " disconnected");
-                    clients.remove(this);
-                    break;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
+        }
+
+        /**
+         * Helper Method to send messages to client
+         * @param message
+         */
+        private void sendMessageToClient(String message) {
+            try {
+                sOutput.writeObject(message);
+            } catch (SocketException exc) {
+                // triggered when client disconnects abruptly
+                System.out.println(username + " disconnected");
+                closeThisConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /**
+         * used to disconnect from server properly
+         */
+        private void closeThisConnection() {
+            try {
+                clients.remove(this);
+                sOutput.close();
+                sInput.close();
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /**
+         * Parses all messages that don't have a specialized tag
+         * broadcasts message to every client
+         * logs message to server console
+         * also sends and logs timestamp
+         */
+        private void processAsStandardMessage() {
+            System.out.println(getTimeStamp() + " " + username + ": " + cm.getMessage());
+            for (ClientThread clientThread : clients)
+            clientThread.sendMessageToClient(getTimeStamp() + " " +
+                    username + ": " + cm.getMessage());
+        }
+
+        /**
+         * Parses Logout command
+         * triggered when a command begins with "/logout"
+         * prints a time stamp and notice of a successful logout to the client
+         * logs the logout in the server console
+         */
+        private void processAsLogout() {
+            sendMessageToClient(getTimeStamp() + " Logout successful");
+            System.out.println(getTimeStamp() + " User left: " + username);
+            closeThisConnection();
+        }
+
+        /**
+         * Processes DM commands
+         * is triggered when a user starts a command with "/msg"
+         * if the command doesn't have enough arguments or the recipient
+         *   specified is not connected then the sender is notified of the
+         *   error.
+         * Message containing timestamp, sender, reciever, and message is
+         *   sent to sender, reciever, and printed to server log.
+         */
+        private void processAsDM() {
+            if (cm.getRecipient().equals("")) {
+                sendMessageToClient("you must include a recipient and a message");
+                return;
+            }
+            ClientThread recipient = null;
+            for (ClientThread clientThread : clients)
+                if (clientThread.username.equals(cm.getRecipient()))
+                    recipient = clientThread;
+            if (recipient == null) {
+                sendMessageToClient(cm.getRecipient() + " is not connected");
+                return;
+            }
+            String message = getTimeStamp() + " " + username + " -> "
+                    + recipient.username + ": " + cm.getMessage();
+            sendMessageToClient(message);
+            recipient.sendMessageToClient(message);
+            System.out.println(message);
+        }
+
+        /**
+         * Parses the List command.
+         * Is triggered when a command starts with "/list"
+         * sends a list of Users to the user who typed the command that does
+         *   excludes that user.
+         * Logs timestamp, command, and user who typed it in server console
+         */
+        private void processAsList() {
+            StringBuilder build = new StringBuilder();
+            build.append(getTimeStamp() + " List of Users: ");
+            for (ClientThread client : clients)
+                if (!client.username.equals(username))
+                    build.append("\t" + client.username);
+            sendMessageToClient(build.toString());
+            System.out.println(getTimeStamp() + " Sent List of Users to " + username);
+        }
+
+        /**
+         * TODO: this
+         */
+        private void processAsTicTacToe() {
+
         }
     }
 }

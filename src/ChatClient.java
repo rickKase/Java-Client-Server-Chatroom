@@ -1,3 +1,4 @@
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -36,6 +37,7 @@ final class ChatClient {
             sOutput = new ObjectOutputStream(socket.getOutputStream());
             sInput = new ObjectInputStream(socket.getInputStream());
             sOutput.writeObject(username);
+            sOutput.flush();
         } catch (IOException e) {
             e.printStackTrace();
             return false;
@@ -89,29 +91,65 @@ final class ChatClient {
         ChatClient client = new ChatClient(serverAddress, portNumber, username);
         client.start();
 
-        System.out.println("Connected to server as " + username);
-        System.out.println("Begin typing:");
+        System.out.println("Connected to " + serverAddress + "/" + portNumber + " as " + username);
         // Send an empty message to the server
         while (true) {
             String message = scan.nextLine();
 
-            //client.sendMessage(new ChatMessage());
+            client.sendMessage(createMessage(message));
         }
     }
 
+    /**
+     * Turns the Users input into an object representing a message to the server
+     * @param message
+     * @return
+     */
+    private static ChatMessage createMessage(String message) {
+        String[] command = message.split(" ");
+        if (command.length == 0)
+            return new ChatMessage(0, "","");
+        switch (command[0]) {
+            case "/logout":
+                return new ChatMessage(1, "","");
+            case "/msg":
+                if (command.length < 2)
+                    return new ChatMessage(2, "", "");
+                //start after the space after the second word
+                String dm = message.substring(command[0].length()
+                        + command[1].length() + 2);
+                return new ChatMessage(2, dm, command[1]);
+            case "/ttt": // TODO write the message format
+
+                break;
+            case "/list":
+                return new ChatMessage(3, "","");
+        }
+        return new ChatMessage(0, message, "");
+    }
 
     /*
      * This is a private class inside of the ChatClient
      * It will be responsible for listening for messages from the ChatServer.
      * ie: When other clients send messages, the server will relay it to the client.
      */
+
+    /**
+     * This class allows each user to recieve infomation and send information
+     * asynchronously. Messages to and from the server don't have to come in
+     * any set order because all messages to the Server are processed on the
+     * main thread while those coming from the server are process right here.
+     */
     private final class ListenFromServer implements Runnable {
+        Scanner serverInput = new Scanner(sInput);
         public void run() {
             try {
                 while (true) {
                     String msg = (String) sInput.readObject();
                     System.out.println(msg);
                 }
+            } catch (EOFException e) {
+                System.exit(0);
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
