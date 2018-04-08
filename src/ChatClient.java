@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Scanner;
 
 final class ChatClient {
     private ObjectInputStream sInput;
@@ -32,42 +33,20 @@ final class ChatClient {
         // Create a socket
         try {
             socket = new Socket(server, port);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        // Attempt to create output stream
-        try {
             sOutput = new ObjectOutputStream(socket.getOutputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        // Attempt to create input stream
-        try {
             sInput = new ObjectInputStream(socket.getInputStream());
+            sOutput.writeObject(username);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
-
         // Create client thread to listen from the server for incoming messages
         Runnable r = new ListenFromServer();
         Thread t = new Thread(r);
         t.start();
-
         // After starting, send the clients username to the server.
-        try {
-            sOutput.writeObject(username);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         return true;
     }
-
 
     /*
      * Sends a string to the server
@@ -94,14 +73,30 @@ final class ChatClient {
      * If the username is not specified "Anonymous" should be used
      */
     public static void main(String[] args) {
-        // Get proper arguments and override defaults
+        Scanner scan = new Scanner(System.in);
+        String username = "Anonymous";
+        int portNumber = 1500;
+        String serverAddress = "localhost";
 
+        // Get proper arguments and override defaults
+        if (args.length > 0)
+            username = args[0];
+        if (args.length > 1)
+            portNumber = Integer.parseInt(args[1]);
+        if (args.length > 2)
+            serverAddress = args[2];
         // Create your client and start it
-        ChatClient client = new ChatClient("localhost", 1500, "CS 180 Student");
+        ChatClient client = new ChatClient(serverAddress, portNumber, username);
         client.start();
 
+        System.out.println("Connected to server as " + username);
+        System.out.println("Begin typing:");
         // Send an empty message to the server
-        client.sendMessage(new ChatMessage());
+        while (true) {
+            String message = scan.nextLine();
+
+            //client.sendMessage(new ChatMessage());
+        }
     }
 
 
@@ -113,8 +108,10 @@ final class ChatClient {
     private final class ListenFromServer implements Runnable {
         public void run() {
             try {
-                String msg = (String) sInput.readObject();
-                System.out.print(msg);
+                while (true) {
+                    String msg = (String) sInput.readObject();
+                    System.out.println(msg);
+                }
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
