@@ -86,8 +86,7 @@ final class ChatServer {
     }*/
 
     /**
-     * TODO: USE THIS METHOD TO PREFACE ALL MESSAGES TO CLIENTS AND IN LOG FILES
-     * TODO: also delete these two TODO lines :P
+
      * Helper method to quickly get proper Timestamp
      * @return
      */
@@ -130,7 +129,9 @@ final class ChatServer {
         int id;
 
         ChatMessage cm;                 // Helper variable to manage messages
-
+        TicTacToeGame game;             // Helper variable to manage ticTacToe
+        String starter;                 // Helper variable to manage starting player
+        String opponent;                // Helper variable to manage opponent
         /*
          * socket - the socket the client is connected to
          * id - id of the connection
@@ -291,7 +292,41 @@ final class ChatServer {
          * TODO: this
          */
         private void processAsTicTacToe() {
-
+            if (cm.getRecipient().equals("")) {
+                sendMessageToClient("you must include a recipient and a message");
+                return;
+            }
+            if (cm.getRecipient().equals(username)) {
+                sendMessageToClient("Invalid move in game against " + username);
+                return;
+            }
+            ClientThread recipient = null;
+            for (ClientThread clientThread : clients)
+                if (clientThread.username.equals(cm.getRecipient()))
+                    recipient = clientThread;
+            if (recipient == null) {
+                sendMessageToClient(cm.getRecipient() + " is not connected");
+                return;
+            }
+            if(cm.getMessage().equals("")) {
+                String messageStart = "Started TicTacToe with ";
+                starter = username;
+                game.newBoard();
+                String messageRec = "Started TicTacToe with ";
+                opponent = cm.getRecipient();
+                sendMessageToClient(messageStart);
+                recipient.sendMessageToClient(messageRec);
+                return;
+            }
+            if(cm.getMessage().matches("[0-9]")){
+                if(username.equals(starter)) {
+                    game.updateBoard(Integer.parseInt(cm.getMessage()), "X");
+                    game.printBoard();
+                }else if(username.equals(opponent)) {
+                    game.updateBoard(Integer.parseInt(cm.getMessage()), "O");
+                    game.printBoard();
+                }
+            }
         }
     }
 }
