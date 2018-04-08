@@ -309,23 +309,35 @@ final class ChatServer {
                 return;
             }
             if(cm.getMessage().equals("")) {
-                String messageStart = "Started TicTacToe with ";
                 starter = username;
-                game.newBoard();
-                String messageRec = "Started TicTacToe with ";
                 opponent = cm.getRecipient();
-                sendMessageToClient(messageStart);
-                recipient.sendMessageToClient(messageRec);
+
+                String messageStarter = "Started TicTacToe with " + opponent;
+                String messageOpponent = "Started TicTacToe with " + starter;
+                sendMessageToClient(messageStarter);
+                recipient.sendMessageToClient(messageOpponent);
+                try {
+                    game.newBoard();
+                }catch (NullPointerException a){
+                    System.out.println(cm.getMessage());
+                }
                 return;
             }
-            if(cm.getMessage().matches("[0-9]")){
+            if(cm.getMessage().equals("0") || cm.getMessage().equals("1") || cm.getMessage().equals("2") || cm.getMessage().equals("3") ||
+                    cm.getMessage().equals("4") || cm.getMessage().equals("5") || cm.getMessage().equals("6") || cm.getMessage().equals("7") || cm.getMessage().equals("8")){
+                int position = Integer.parseInt(cm.getMessage());
                 if(username.equals(starter)) {
-                    game.updateBoard(Integer.parseInt(cm.getMessage()), "X");
+                    game.updateBoard(position, "X");
                     game.printBoard();
                 }else if(username.equals(opponent)) {
-                    game.updateBoard(Integer.parseInt(cm.getMessage()), "O");
+                    game.updateBoard(position, "O");
                     game.printBoard();
                 }
+            }else if(username.equals(starter)){
+                sendMessageToClient("Invalid move in game against " + starter);
+            }else if(username.equals(opponent)){
+                sendMessageToClient("Invalid move in game against " + opponent);
+
             }
         }
     }

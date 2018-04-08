@@ -120,14 +120,16 @@ final class ChatClient {
                         + command[1].length() + 2);
                 return new ChatMessage(2, dm, command[1]);
             case "/ttt":
-                if(command.length < 3)
+                if(command.length < 3) {
                     return new ChatMessage(4, "", command[1]);
+                }
+
 
                 //when user enters move, will process it
-                if(command.length == 3) {
-                    return new ChatMessage(4, command[2], command[1]);
-                }
-                break;
+                ChatMessage moves = new ChatMessage(4,"", command[1]);
+                moves.setMessage(command[2]);
+                return moves;
+
 
             case "/list":
                 return new ChatMessage(3, "","");

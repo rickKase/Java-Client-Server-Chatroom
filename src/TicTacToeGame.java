@@ -16,7 +16,7 @@ public class TicTacToeGame {
     public void newBoard(){
         for(int i = 0; i < board.length; i++){
             for(int j = 0; j < board[i].length; j++){
-                board[i][j] = " ";
+                board[i][j] = "";
             }
         }
     }
@@ -54,12 +54,11 @@ public class TicTacToeGame {
         }
     }
     public void printBoard(){
-        System.out.print(board[0][0]+"|"+board[0][1]+"|"+board[0][2]);
-        System.out.print("___________");
-        System.out.print(board[1][0]+"|"+board[1][1]+"|"+board[1][2]);
-        System.out.print("___________");
-        System.out.print(board[2][0]+"|"+board[2][1]+"|"+board[2][2]);
-
+        System.out.println(board[0][0]+"|"+board[0][1]+"|"+board[0][2]);
+        System.out.println("___________");
+        System.out.println(board[1][0]+"|"+board[1][1]+"|"+board[1][2]);
+        System.out.println("___________");
+        System.out.println(board[2][0]+"|"+board[2][1]+"|"+board[2][2]);
     }
     // TODO 4: Implement necessary methods to manage the games of Tic Tac Toe
 
