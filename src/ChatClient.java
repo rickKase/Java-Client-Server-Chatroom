@@ -93,7 +93,8 @@ final class ChatClient {
         try {
             client.start();
         }catch (NullPointerException a){
-            System.out.println("shit");
+            System.out.println("Client could not be started");
+
         }
         System.out.println("Connected to " + serverAddress + "/" + portNumber + " as " + username);
         // Send an empty message to the server

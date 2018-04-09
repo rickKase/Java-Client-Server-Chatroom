@@ -129,7 +129,7 @@ final class ChatServer {
         int id;
 
         ChatMessage cm;                 // Helper variable to manage messages
-        TicTacToeGame game;             // Helper variable to manage ticTacToe
+        TicTacToeGame game = new TicTacToeGame();             // Helper variable to manage ticTacToe
         String starter;                 // Helper variable to manage starting player
         String opponent;                // Helper variable to manage opponent
         /*
@@ -321,9 +321,9 @@ final class ChatServer {
                 sendMessageToClient(messageStarter);
                 recipient.sendMessageToClient(messageOpponent);
                 game.newBoard();
-                System.out.println(game.stringBoard());
+                /*System.out.println(game.stringBoard());
                 sendMessageToClient(game.stringBoard());
-                recipient.sendMessageToClient(game.stringBoard());
+                recipient.sendMessageToClient(game.stringBoard());*/
                 return;
             }
             if(cm.getMessage().equals("0") || cm.getMessage().equals("1") || cm.getMessage().equals("2") || cm.getMessage().equals("3") ||
