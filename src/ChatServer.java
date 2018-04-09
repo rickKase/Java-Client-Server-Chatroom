@@ -167,7 +167,11 @@ final class ChatServer {
                             processAsLogout();
                             return;
                         case 2:
-                            processAsDM();
+                            try{
+                                processAsDM();
+                            }catch (NullPointerException s){
+                                System.out.println("shit");
+                            }
                             break;
                         case 3:
                             processAsList();
@@ -316,22 +320,29 @@ final class ChatServer {
                 String messageOpponent = "Started TicTacToe with " + starter;
                 sendMessageToClient(messageStarter);
                 recipient.sendMessageToClient(messageOpponent);
-                try {
-                    game.newBoard();
-                }catch (NullPointerException a){
-                    System.out.println(cm.getMessage());
-                }
+                game.newBoard();
+                System.out.println(game.stringBoard());
+                sendMessageToClient(game.stringBoard());
+                recipient.sendMessageToClient(game.stringBoard());
                 return;
             }
             if(cm.getMessage().equals("0") || cm.getMessage().equals("1") || cm.getMessage().equals("2") || cm.getMessage().equals("3") ||
                     cm.getMessage().equals("4") || cm.getMessage().equals("5") || cm.getMessage().equals("6") || cm.getMessage().equals("7") || cm.getMessage().equals("8")){
                 int position = Integer.parseInt(cm.getMessage());
                 if(username.equals(starter)) {
-                    game.updateBoard(position, "X");
-                    game.printBoard();
-                }else if(username.equals(opponent)) {
-                    game.updateBoard(position, "O");
-                    game.printBoard();
+                    if(!game.updateBoard(position, "X")){
+                        sendMessageToClient("Invalid move in game against " + starter);
+                        return;
+                    }
+                    sendMessageToClient(game.stringBoard());
+                    recipient.sendMessageToClient(game.stringBoard());
+                } else if(username.equals(opponent)) {
+                    if(!game.updateBoard(position, "O")){
+                        sendMessageToClient("Invalid move in game against " + opponent);
+                        return;
+                    }
+                    sendMessageToClient(game.stringBoard());
+                    recipient.sendMessageToClient(game.stringBoard());
                 }
             }else if(username.equals(starter)){
                 sendMessageToClient("Invalid move in game against " + starter);

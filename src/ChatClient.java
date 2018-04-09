@@ -39,7 +39,8 @@ final class ChatClient {
             sOutput.writeObject(username);
             sOutput.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Client could not be started");
+            System.exit(1);
             return false;
         }
         // Create client thread to listen from the server for incoming messages
@@ -89,8 +90,11 @@ final class ChatClient {
             serverAddress = args[2];
         // Create your client and start it
         ChatClient client = new ChatClient(serverAddress, portNumber, username);
-        client.start();
-
+        try {
+            client.start();
+        }catch (NullPointerException a){
+            System.out.println("shit");
+        }
         System.out.println("Connected to " + serverAddress + "/" + portNumber + " as " + username);
         // Send an empty message to the server
         while (true) {
@@ -98,6 +102,7 @@ final class ChatClient {
 
             client.sendMessage(createMessage(message));
         }
+
     }
 
     /**
@@ -123,14 +128,10 @@ final class ChatClient {
                 if(command.length < 3) {
                     return new ChatMessage(4, "", command[1]);
                 }
-
-
                 //when user enters move, will process it
                 ChatMessage moves = new ChatMessage(4,"", command[1]);
                 moves.setMessage(command[2]);
                 return moves;
-
-
             case "/list":
                 return new ChatMessage(3, "","");
         }

@@ -3,7 +3,7 @@ public class TicTacToeGame {
     private static final char PLAYERX = 'X';     // Helper constant for X player
     private static final char PLAYERO = 'O';     // Helper constant for O player
     private static final char SPACE = ' ';       // Helper constant for spaces
-    private static String[][] board = new String[3][3];
+    private static String[][] board;
 
     /*
     Sample TicTacToe Board
@@ -14,6 +14,7 @@ public class TicTacToeGame {
       6 | 7 | 8
      */
     public void newBoard(){
+        board = new String[3][3];
         for(int i = 0; i < board.length; i++){
             for(int j = 0; j < board[i].length; j++){
                 board[i][j] = "";
@@ -21,44 +22,71 @@ public class TicTacToeGame {
         }
     }
 
-    public void updateBoard(int pos, String move){
+    public boolean updateBoard(int pos, String move){
         switch (pos) {
             case 0:
-                board[0][0] = move;
-                break;
+                if(board[0][0].equals("")) {
+                    board[0][0] = move;
+                    return true;
+                }
+                return false;
             case 1:
-                board[0][1] = move;
-                break;
+                if(board[0][1].equals("")) {
+                    board[0][1] = move;
+                    return true;
+                }
+                return false;
             case 2:
-                board[0][2] = move;
-                break;
+                if(board[0][2].equals("")) {
+                    board[0][2] = move;
+                    return true;
+                }
+                return false;
             case 3:
-                board[1][0] = move;
-                break;
+                if(board[1][0].equals("")) {
+                    board[1][0] = move;
+                    return true;
+                }
+                return false;
             case 4:
-                board[1][1] = move;
-                break;
+                if(board[1][1].equals("")) {
+                    board[1][1] = move;
+                    return true;
+                }
+                return false;
             case 5:
-                board[1][2] = move;
-                break;
+                if(board[1][2].equals("")) {
+                    board[1][2] = move;
+                    return true;
+                }
+                return false;
             case 6:
-                board[2][0] = move;
-                break;
+                if(board[2][0].equals("")) {
+                    board[2][0] = move;
+                    return true;
+                }
+                return false;
             case 7:
+                if(board[2][1].equals("")) {
                 board[2][1] = move;
-                break;
+                return true;
+            }
+            return false;
             case 8:
-                board[2][2] = move;
-                break;
+                if(board[2][2].equals("")) {
+                    board[2][2] = move;
+                    return true;
+                }
+                return false;
 
         }
+        return false;
     }
-    public void printBoard(){
-        System.out.println(board[0][0]+"|"+board[0][1]+"|"+board[0][2]);
-        System.out.println("___________");
-        System.out.println(board[1][0]+"|"+board[1][1]+"|"+board[1][2]);
-        System.out.println("___________");
-        System.out.println(board[2][0]+"|"+board[2][1]+"|"+board[2][2]);
+    public String stringBoard(){
+        String current = board[0][0]+"|"+board[0][1]+"|"+board[0][2] + "\n" +
+        "___________\n"+ board[1][0]+"|"+board[1][1]+"|"+board[1][2]+"\n"+
+        "___________\n"+board[2][0]+"|"+board[2][1]+"|"+board[2][2];
+        return current;
     }
     // TODO 4: Implement necessary methods to manage the games of Tic Tac Toe
 
